@@ -27,3 +27,20 @@ alex-yamamoto-portfolio/
 │   └── ...
 └── README.md
 ```
+
+## Fluxo de Acesso
+Acesso principal: https://laravel.satochi.com.br
+
+Frontend Vue.js
+
+Todas as requisições para /api serão direcionadas para o backend
+
+API diretamente: https://api.laravel.satochi.com.br
+
+Backend Laravel
+
+Acesso direto à API RESTful
+
+Dashboard Traefik: http://laravel.satochi.com.br:8080 (protegido)
+
+Monitoramento e gerenciamento do proxy reverso
