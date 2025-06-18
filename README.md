@@ -44,3 +44,5 @@ Acesso direto à API RESTful
 Dashboard Traefik: http://laravel.satochi.com.br:8080 (protegido)
 
 Monitoramento e gerenciamento do proxy reverso
+
+Acesso ao banco de dados é restrito a API, bloqueado pelo Traefik permitindo somente o acesso do Container do Laravel.
