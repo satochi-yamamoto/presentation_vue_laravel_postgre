@@ -1,6 +1,6 @@
 api:
   dashboard: true
-  insecure: true  # Em produção, usar autenticação
+  insecure: true  # For development only
 
 entryPoints:
   web:
@@ -27,7 +27,7 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: seu-email@example.com  # Substituir pelo seu email
+      email: seu-email@example.com
       storage: "/letsencrypt/acme.json"
       httpChallenge:
         entryPoint: web
