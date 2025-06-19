@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "./traefik/dynamic:/etc/traefik/dynamic:ro"
+      - "letsencrypt:/letsencrypt"
+    networks:
+      - traefik_network
+      - frontend_network
+
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: laravel_app
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.laravel.satochi.com.br`) || PathPrefix(`/api`)"
+      - "traefik.http.routers.api.service=api-service"
+      - "traefik.http.routers.api.tls=true"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api-service.loadbalancer.server.port=80"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=alex_portfolio
+      - DB_USERNAME=laravel
+      - DB_PASSWORD=secret
+      - APP_URL=https://api.laravel.satochi.com.br
+      - SANCTUM_STATEFUL_DOMAINS=laravel.satochi.com.br,api.laravel.satochi.com.br
+    volumes:
+      - ./backend:/var/www
+      - ./backend/storage:/var/www/storage
+    networks:
+      - backend_network
+      - frontend_network
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: alex_portfolio
+      POSTGRES_USER: laravel
+      POSTGRES_PASSWORD: secret
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend_network
+    security_opt:
+      - no-new-privileges:true
+    ports: []
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laravel -d alex_portfolio"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vue_app
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`laravel.satochi.com.br`)"
+      - "traefik.http.routers.frontend.service=frontend-service"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend-service.loadbalancer.server.port=8080"
+    environment:
+      - VITE_API_BASE_URL=https://api.laravel.satochi.com.br
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - frontend_network
+
+networks:
+  traefik_network:
+    driver: bridge
+    internal: false
+  
+  frontend_network:
+    driver: bridge
+    internal: false
+  
+  backend_network:
+    driver: bridge
+    internal: true
+
+volumes:
+  postgres_data:
+    driver: local
+  letsencrypt:
+    driver: local

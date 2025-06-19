@@ -1,0 +1,36 @@
+http:
+  routers:
+    frontend-router:
+      rule: "Host(`laravel.satochi.com.br`)"
+      service: frontend-service
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    api-router:
+      rule: "Host(`api.laravel.satochi.com.br`) || PathPrefix(`/api`)"
+      service: api-service
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - api-stripprefix
+
+  services:
+    frontend-service:
+      loadBalancer:
+        servers:
+          - url: "http://frontend:8080"
+
+    api-service:
+      loadBalancer:
+        servers:
+          - url: "http://app:80"
+
+  middlewares:
+    api-stripprefix:
+      stripPrefix:
+        prefixes:
+          - "/api"
