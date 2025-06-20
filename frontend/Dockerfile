@@ -1,4 +1,7 @@
-FROM node:18-alpine as builder
+FROM node:20-alpine as builder
+
+# Update apk packages to reduce vulnerabilities
+RUN apk update && apk upgrade
 
 WORKDIR /app
 
