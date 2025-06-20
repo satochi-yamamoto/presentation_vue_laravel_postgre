@@ -15,7 +15,12 @@ RUN apk update && apk add \
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copy composer files first to optimize Docker cache
+# Create Laravel directory structure
+RUN mkdir -p storage/framework/{sessions,views,cache} \
+    && mkdir -p storage/logs \
+    && mkdir -p bootstrap/cache
+
+# Copy composer files first
 COPY composer.json composer.lock* ./
 
 # Install PHP dependencies
@@ -28,8 +33,9 @@ COPY . .
 RUN composer dump-autoload --optimize
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/storage
-RUN chmod -R 775 /var/www/storage
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 775 /var/www/storage \
+    && chmod -R 775 /var/www/bootstrap/cache
 
 EXPOSE 9000
 CMD ["php-fpm"]
